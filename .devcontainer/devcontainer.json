@@ -1,0 +1,152 @@
+{
+  // ============================================================
+  //  DevContainer — GitHub Tracker + BG IT News Aggregator
+  //  Stack: Next.js 14, React, TypeScript, Tailwind CSS
+  //  Runtime: Node.js 20 LTS | Package Manager: npm
+  // ============================================================
+  "name": "GitHub Tracker & BG IT News",
+  // Base image: Node.js 20 LTS on Debian Bookworm (slim & stable)
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20-bookworm",
+  // ── Features ─────────────────────────────────────────────────
+  // Each feature is a self-contained install script that runs
+  // inside the container image at build time.
+  "features": {
+    // GitHub CLI — lets you manage PRs, issues, and repos
+    // directly from the container terminal without leaving the IDE
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    // Node.js version manager — lets you switch Node versions
+    // inside the container if you ever need to test compatibility
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nodeGypDependencies": true
+    },
+    // Common utilities: git, curl, wget, jq (JSON parser — very
+    // useful when debugging raw API responses from GitHub/news APIs)
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    }
+  },
+  // ── Port Forwarding ──────────────────────────────────────────
+  // Next.js dev server runs on 3000.
+  // 3001 is reserved for a local mock API / proxy server if needed
+  // (useful for testing news scraping without hitting rate limits).
+  "forwardPorts": [
+    3000,
+    3001
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js App",
+      "onAutoForward": "openBrowserOnce"
+    },
+    "3001": {
+      "label": "Local API / Proxy",
+      "onAutoForward": "silent"
+    }
+  },
+  // ── Post-Create Command ───────────────────────────────────────
+  // Runs ONCE after the container is built for the first time.
+  // Sets up the entire project from scratch automatically.
+  "postCreateCommand": {
+    // Step 1: Scaffold a new Next.js 14 project with all your
+    // chosen options pre-configured (TypeScript, Tailwind, ESLint,
+    // App Router, src/ directory for clean structure).
+    // The '.' means scaffold into the current workspace folder.
+    "scaffold": "if [ ! -f package.json ]; then npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias '@/*' --use-npm; fi",
+    // Step 2: Install extra dependencies your project will need.
+    //   - axios          → cleaner HTTP calls to GitHub & news APIs
+    //   - swr            → client-side data fetching with auto-refresh
+    //   - @octokit/rest  → official GitHub API client (typed, reliable)
+    //   - cheerio        → HTML parser for scraping Bulgarian IT news
+    //                      sites that don't have a public API
+    //   - node-cron      → schedule background jobs (e.g. refresh
+    //                      trending repos every hour automatically)
+    //   - date-fns       → lightweight date formatting for timestamps
+    //   - clsx           → conditional Tailwind class merging utility
+    //   - lucide-react   → clean icon set that pairs well with Tailwind
+    "deps": "npm install axios swr @octokit/rest cheerio node-cron date-fns clsx lucide-react",
+    // Step 3: Install dev-only tools.
+    //   - prettier                    → code formatter
+    //   - eslint-config-prettier      → disables ESLint rules that
+    //                                   conflict with Prettier
+    //   - @types/node @types/react    → TypeScript type definitions
+    //   - prettier-plugin-tailwindcss → auto-sorts Tailwind classes
+    "devdeps": "npm install -D prettier eslint-config-prettier @types/node @types/react prettier-plugin-tailwindcss"
+  },
+  // ── VS Code / Antigravity Customizations ─────────────────────
+  "customizations": {
+    "vscode": {
+      // Extensions auto-installed inside the container:
+      "extensions": [
+        // TypeScript & React
+        "dbaeumer.vscode-eslint", // ESLint inline errors
+        "esbenp.prettier-vscode", // Format on save
+        "bradlc.vscode-tailwindcss", // Tailwind IntelliSense
+        "ms-vscode.vscode-typescript-next", // Latest TS language support
+        // Git & GitHub
+        "github.vscode-pull-request-github", // PR/issue management
+        "eamodio.gitlens", // Git blame, history, diffs
+        // API Development
+        "humao.rest-client", // Test your Next.js API routes directly
+        // from .http files — no Postman needed
+        // Quality of Life
+        "christian-kohler.path-intellisense", // Auto-complete file paths
+        "formulahendry.auto-rename-tag", // Auto-rename JSX tags
+        "streetsidesoftware.code-spell-checker" // Catches typos in code
+      ],
+      // Editor settings applied inside this container only:
+      "settings": {
+        // Format every file on save using Prettier
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        // ESLint auto-fixes simple issues on save (unused imports etc.)
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        // Tailwind CSS: enable IntelliSense in JSX/TSX files
+        "tailwindCSS.includeLanguages": {
+          "typescriptreact": "html"
+        },
+        "files.associations": {
+          "*.css": "tailwindcss"
+        },
+        // Terminal: use Zsh (installed via common-utils feature above)
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        // TypeScript: always use the workspace version (not VS Code built-in)
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true
+      }
+    }
+  },
+  // ── Security ──────────────────────────────────────────────────
+  // Run as the non-root 'node' user — limits blast radius if the
+  // agent or a dependency does something unexpected inside the container.
+  "remoteUser": "node",
+  // Only mount the project workspace. Nothing else from your
+  // host machine is accessible inside the container.
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  // Environment variables available inside the container.
+  // Add your actual secret values to a .env.local file (git-ignored) —
+  // NEVER hardcode real keys here in devcontainer.json.
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    // GitHub API — create a Personal Access Token at:
+    // github.com/settings/tokens → Fine-grained token →
+    // Read-only access to public repos is enough for trending data.
+    // Then add to your .env.local:  GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
+    // News API (newsapi.org) — free tier gives 100 req/day.
+    // Register at newsapi.org, get your key, add to .env.local:
+    // NEWS_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    "NEWS_API_KEY": "${localEnv:NEWS_API_KEY}"
+  }
+  //"mounts": [
+  //  "source=D:/Antigravity-Global,target=/home/vscode/.antigravity-personal,type=bind,consistency=cached"
+  //]
+}

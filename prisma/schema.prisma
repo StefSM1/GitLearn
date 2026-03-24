@@ -1,0 +1,36 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  url       String   @unique
+  source    String
+  location  String?
+  category  String?
+  createdAt DateTime @default(now())
+}
+
+model ScrapeLog {
+  id        Int      @id @default(autoincrement())
+  source    String
+  status    String
+  message   String?
+  articles  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model NewsSource {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  enabled Boolean  @default(true)
+  type    String
+
+  @@map("Source")
+}
