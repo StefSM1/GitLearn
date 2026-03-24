@@ -3,6 +3,7 @@ import { NewsCard } from '@/components/news/NewsCard';
 import { NewsTabs } from '@/components/news/NewsTabs';
 import { Navbar } from '@/components/Navbar';
 import { Search, ArrowRight, Zap, TrendingUp, Globe } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function Home() {
   const articles = await prisma.article.findMany({
@@ -68,7 +69,7 @@ export default async function Home() {
             {/* Note: In a real app, this would be a client component for interactive filtering */}
             {/* For now, we render it for UI consistency */}
             <div className="hidden lg:block">
-              <NewsTabs activeTab="World" onChange={() => {}} />
+              <NewsTabs activeTab="World" />
             </div>
           </div>
 
@@ -123,4 +124,3 @@ export default async function Home() {
 }
 
 // Ensure Link is available if used
-import Link from 'next/link';

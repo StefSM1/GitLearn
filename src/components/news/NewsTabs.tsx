@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Globe2, Building2 } from 'lucide-react';
@@ -6,7 +8,7 @@ export type TabType = 'City' | 'Country' | 'World';
 
 interface NewsTabsProps {
   activeTab: TabType;
-  onChange: (tab: TabType) => void;
+  onChange?: (tab: TabType) => void;
 }
 
 export function NewsTabs({ activeTab, onChange }: NewsTabsProps) {
@@ -22,7 +24,7 @@ export function NewsTabs({ activeTab, onChange }: NewsTabsProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => onChange(tab.id)}
+            onClick={() => onChange?.(tab.id)}
             className={`
               relative flex items-center justify-center gap-2 py-3 px-6 rounded-full font-medium transition-all duration-300 flex-1 z-10
               ${activeTab === tab.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}
